@@ -1,0 +1,10 @@
+# .clangd
+CompileFlags:
+  Add:
+    - I/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1
+    - I/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1/x86_64-pc-linux-gnu
+    - I/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1/backward
+    - I/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include
+    - I/usr/local/include
+    - I/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include-fixed
+    - I/usr/include
