@@ -16,10 +16,10 @@ const {
 } = wasm.instance.exports;
 
 window.addEventListener("keydown", e => {
-  if (e.key === "w") move(0.2);
-  if (e.key === "s") move(-0.2);
-  if (e.key === "a") rotate(-1);
-  if (e.key === "d") rotate(1);
+  if (e.key === "w") move(1);
+  if (e.key === "s") move(-1);
+  if (e.key === "a") rotate(-10);
+  if (e.key === "d") rotate(10);
 });
 
 function loop() {
@@ -36,14 +36,19 @@ function loop() {
 
   for (let x = 0; x < canvas.width; x++) {
     const ceiling = cols[x * 2];
-    const floor   = cols[x * 2 + 1];
+    const floor = cols[x * 2 + 1];
+    const dist = (canvas.height) / ((canvas.height / 2) - ceiling);
 
+    let shade = 1 / (1 + dist * 0.02);
+    shade = Math.pow(shade, 1.4);
+
+    const wallColor = Math.floor(shade * 170);
     // shade sky
     ctx.fillStyle = "#000";
     ctx.fillRect(x, 0, 1, ceiling);
 
     // shade wall
-    ctx.fillStyle = "#aaa";
+    ctx.fillStyle = `rgb(${wallColor}, ${wallColor}, ${wallColor})`;
     ctx.fillRect(x, ceiling, 1, floor - ceiling);
 
     // shade ground

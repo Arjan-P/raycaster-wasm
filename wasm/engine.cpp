@@ -1,5 +1,4 @@
 #include <cmath>
-#include <iostream>
 #include "trig_lut.h"
 
 constexpr int32_t FP_SHIFT = 16;
@@ -25,21 +24,29 @@ extern "C" {
 int32_t playerX = FloatToFixed(3.0f);
 int32_t playerY = FloatToFixed(3.0f);
 int playerA = 0;
-int FOV = 256;
+int FOV = 128;
 
-int32_t mapWidth = 8;
-int32_t mapHeight = 8;
-int32_t mapDepth = 8;
+int32_t mapWidth = 16;
+int32_t mapHeight = 16;
+int32_t mapDepth = 16;
 
 int32_t map[] = {
-  1, 1, 1, 1, 1, 1, 1, 1,
-  1, 0, 0, 0, 0, 0, 0, 1,
-  1, 0, 0, 0, 0, 0, 0, 1,
-  1, 0, 0, 0, 0, 0, 0, 1,
-  1, 0, 0, 0, 0, 0, 0, 1,
-  1, 0, 0, 0, 0, 0, 0, 1,
-  1, 0, 0, 0, 0, 0, 0, 1,
-  1, 1, 1, 1, 1, 1, 1, 1
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 
 struct Column {
@@ -58,19 +65,19 @@ void move(float f)
 
 void rotate(int a)
 { 
-	playerA = (playerA + a) & ANGLE_MASK;
+	playerA = (playerA + a);
+	playerA &= ANGLE_MASK;
 }
 
 void render(int screenW, int screenH)
 {
-	std::cout << playerA << "\n" << std::endl;
 	for (int x = 0; x < screenW; x++)
 	{
-		int rayA = playerA - (FOV / 2) + (x * FOV) / screenW; 
+		int rayA = (playerA - FOV / 2) + (x * (FOV) / screenW);
 		rayA &= ANGLE_MASK;
 
-		int32_t rayX = sinLUT[rayA];
-		int32_t rayY = cosLUT[rayA];
+		int32_t rayX = cosLUT[rayA];
+		int32_t rayY = sinLUT[rayA];
 
 		int32_t dist = 0;
 		bool hit = false;
