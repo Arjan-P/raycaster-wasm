@@ -1,5 +1,6 @@
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
+var running = true;
 
 const wasm = await WebAssembly.instantiateStreaming(
   fetch("engine.wasm"),
@@ -17,8 +18,8 @@ const {
 window.addEventListener("keydown", e => {
   if (e.key === "w") move(0.2);
   if (e.key === "s") move(-0.2);
-  if (e.key === "a") rotate(-0.1);
-  if (e.key === "d") rotate(0.1);
+  if (e.key === "a") rotate(-1);
+  if (e.key === "d") rotate(1);
 });
 
 function loop() {
@@ -37,12 +38,15 @@ function loop() {
     const ceiling = cols[x * 2];
     const floor   = cols[x * 2 + 1];
 
+    // shade sky
     ctx.fillStyle = "#000";
     ctx.fillRect(x, 0, 1, ceiling);
 
+    // shade wall
     ctx.fillStyle = "#aaa";
     ctx.fillRect(x, ceiling, 1, floor - ceiling);
 
+    // shade ground
     ctx.fillStyle = "#444";
     ctx.fillRect(x, floor, 1, canvas.height - floor);
   }
