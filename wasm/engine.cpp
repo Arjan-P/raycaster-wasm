@@ -1,30 +1,13 @@
 #include <cmath>
 #include "trig_lut.h"
-
-constexpr int32_t FP_SHIFT = 16;
-constexpr int32_t FP_ONE = 1 << FP_SHIFT;
-
-inline int32_t FloatToFixed(float f)
-{
-	return (int32_t)(f * FP_ONE);
-}
-
-inline int32_t FixedMult(int32_t a, int32_t b)
-{
-	return (int32_t)(((int64_t)a * b) >> FP_SHIFT);
-}
-
-inline int32_t FixedDiv(int32_t a, int32_t b)
-{
-	return (int32_t)(((int64_t)a << FP_SHIFT) / b);
-}
+#include "fixedpoint_helpers.h"
 
 extern "C" {
 
-int32_t playerX = FloatToFixed(3.0f);
-int32_t playerY = FloatToFixed(3.0f);
+int32_t playerX = FloatToFixed(7.0f);
+int32_t playerY = FloatToFixed(7.0f);
 int playerA = 0;
-int FOV = 128;
+int FOV = 1024 / 8;
 
 int32_t mapWidth = 16;
 int32_t mapHeight = 16;
@@ -37,11 +20,11 @@ int32_t map[] = {
 	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
@@ -78,35 +61,70 @@ void render(int screenW, int screenH)
 
 		int32_t rayX = cosLUT[rayA];
 		int32_t rayY = sinLUT[rayA];
-
-		int32_t dist = 0;
-		bool hit = false;
-
-		while (!hit && dist < FloatToFixed(mapDepth))
+		int32_t deltaDistX = (rayX == 0) ? INT32_MAX : FixedDiv(FP_ONE, abs(rayX));	// dist traveled by ray when stepping one unit along x axis
+		int32_t deltaDistY = (rayY == 0) ? INT32_MAX : FixedDiv(FP_ONE, abs(rayY));	// dist traveled by ray when stepping one unit along y axix
+		int stepX;
+		int stepY;
+		int32_t sideDistX;
+		int32_t sideDistY;
+		int mapX = playerX >> FP_SHIFT;
+		int mapY = playerY >> FP_SHIFT;
+		if(rayX < 0)
 		{
-			int32_t rx = playerX + FixedMult(dist, rayX);
-			int32_t ry = playerY + FixedMult(dist, rayY);
-
-			int mx = rx >> FP_SHIFT;
-			int my = ry >> FP_SHIFT;
-
-			if(mx < 0 || mx >= mapWidth ||
-				my < 0 || my >= mapHeight)
-			{
-				hit = true;
-				break;
-			}
-			if (map[my * mapWidth + mx] == 1)
-				hit = true;
-			dist += FP_ONE / 10;
+			stepX = -1;
+			// dist to immediate left grid line
+			sideDistX = FixedMult(playerX & (FP_ONE - 1), deltaDistX);
+		}
+		else
+		{
+			stepX = 1;
+			// dist to immediate right grid line
+			sideDistX = FixedMult(FP_ONE - (playerX & (FP_ONE - 1)), deltaDistX);
+		}
+		if(rayY < 0)
+		{
+			stepY = -1;
+			// dist to immediate south grid line
+			sideDistY = FixedMult(playerY & (FP_ONE - 1), deltaDistY);
+		}
+		else
+		{
+			stepY = 1;
+			// dist to immediate north grid line
+			sideDistY = FixedMult(FP_ONE - (playerY & (FP_ONE - 1)), deltaDistY);
 		}
 
-		int angleDif = (rayA - playerA) & ANGLE_MASK;
-		int32_t correctedDist = FixedMult(dist, cosLUT[angleDif]);
-		if(correctedDist < FP_ONE / 8)
-			correctedDist = FP_ONE / 8;
+		int side;
+		while(true)
+		{
+			if(sideDistX < sideDistY)
+			{
+				// walk along x axis
+				sideDistX += deltaDistX;
+				mapX += stepX;
+				side = 0;	// hit veritical wall 
+			}
+			else
+			{
+				// walk along y axix
+				sideDistY += deltaDistY;
+				mapY += stepY;
+				side = 1;	// hit horizontal wall
+			}
+			if(mapX < 0 || mapX >= mapWidth || mapY < 0 || mapY >= mapHeight)
+				break;
+			if(map[mapY * mapWidth + mapX])
+				break;
+		}
+		// find perpendicular dist from camera plane to wall
+		int32_t perpDistance;
+		if(side == 0)
+			perpDistance = sideDistX - deltaDistX;
+		else
+			perpDistance = sideDistY - deltaDistY;
 
-		int ceiling = (screenH / 2) - (screenH * FP_ONE / correctedDist);
+		int wallHeight = screenH * FP_ONE / perpDistance;
+		int ceiling = (screenH / 2) - (wallHeight);
 		int floor = screenH - ceiling;
 
 		columns[x] = {ceiling, floor};
