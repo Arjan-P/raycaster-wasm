@@ -1,6 +1,7 @@
 #include <cmath>
 #include "trig_lut.h"
 #include "fixedpoint_helpers.h"
+#include "screen.h"
 
 extern "C" {
 
@@ -32,12 +33,28 @@ int32_t map[] = {
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 
-struct Column {
-  int ceiling;
-  int floor;
-};
+uint32_t* getFramebuffer()
+{
+	return framebuffer;
+}
 
-Column columns[800];
+int getWidth()
+{
+	return SCREEN_WIDTH;
+}
+
+int getHeight()
+{
+	return SCREEN_HEIGHT;
+}
+
+void clear()
+{
+	for(int i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH; i++)
+	{
+		framebuffer[i] = rgba(0,0,0,0);
+	}
+}
 
 void move(float f)
 {
@@ -52,11 +69,12 @@ void rotate(int a)
 	playerA &= ANGLE_MASK;
 }
 
-void render(int screenW, int screenH)
+void render()
 {
-	for (int x = 0; x < screenW; x++)
+	clear();
+	for (int x = 0; x < SCREEN_WIDTH; x++)
 	{
-		int rayA = (playerA - FOV / 2) + (x * (FOV) / screenW);
+		int rayA = (playerA - FOV / 2) + (x * (FOV) / SCREEN_WIDTH);
 		rayA &= ANGLE_MASK;
 
 		int32_t rayX = cosLUT[rayA];
@@ -118,18 +136,46 @@ void render(int screenW, int screenH)
 		}
 		// find perpendicular dist from camera plane to wall
 		int32_t perpDistance;
+		int32_t wallX;
+		int32_t wallY;
+		int wallShade;
+		wallShade = 200;
+		int32_t frac;
 		if(side == 0)
+		{
 			perpDistance = sideDistX - deltaDistX;
+			wallX = (mapX + (stepX < 0)) << FP_SHIFT;
+			wallY = playerY + FixedMult(perpDistance, rayY);
+			frac = wallY & (FP_ONE - 1);
+			if(frac < (FP_ONE >> 5) || frac > (FP_ONE - (FP_ONE >> 5)))
+				wallShade = 0;
+		}
 		else
+		{
 			perpDistance = sideDistY - deltaDistY;
+			wallY = (mapY + (stepY < 0)) << FP_SHIFT;
+			wallX = playerX + FixedMult(perpDistance, rayX);
+			frac = wallX & (FP_ONE - 1);
+			if(frac < (FP_ONE >> 5) || frac > (FP_ONE - (FP_ONE >> 5)))
+				wallShade = 0;
+		}
 
-		int wallHeight = screenH * FP_ONE / perpDistance;
-		int ceiling = (screenH / 2) - (wallHeight);
-		int floor = screenH - ceiling;
-
-		columns[x] = {ceiling, floor};
+		int wallHeight = SCREEN_HEIGHT * FP_ONE / perpDistance;
+		int ceiling = (SCREEN_HEIGHT/ 2) - (wallHeight / 2);
+		if(ceiling < 0)
+			ceiling = 0;
+		int floor = (wallHeight / 2) + (SCREEN_HEIGHT / 2);
+		if(floor > SCREEN_HEIGHT)
+			floor = SCREEN_HEIGHT - 1;
+		for(int y = 0; y < SCREEN_HEIGHT; y++)
+		{
+			if(y <= ceiling)
+				framebuffer[y * SCREEN_WIDTH + x] = rgba(0,0,0, 255);
+			else if(y <= floor)
+				framebuffer[y * SCREEN_WIDTH + x] = rgba(wallShade, wallShade, wallShade, 255);
+			else
+				framebuffer[y * SCREEN_WIDTH + x] = rgba(100, 100, 100, 255);
+		}
 	}
 }
-
-Column *get_columns() { return columns; }
 }

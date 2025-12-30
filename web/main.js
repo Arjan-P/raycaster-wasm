@@ -1,8 +1,3 @@
-const canvas = document.getElementById("c");
-const ctx = canvas.getContext("2d");
-let last = performance.now();
-let frames = 0;
-
 const wasm = await WebAssembly.instantiateStreaming(
   fetch("engine.wasm"),
   {}
@@ -11,10 +6,36 @@ const wasm = await WebAssembly.instantiateStreaming(
 const {
   memory,
   render,
-  get_columns,
+  getFramebuffer,
+  getWidth,
+  getHeight,
   move,
   rotate
 } = wasm.instance.exports;
+
+const width = getWidth();
+const height = getHeight();
+const fbPtr = getFramebuffer();
+
+const fbU32 = new Uint32Array(
+  memory.buffer,
+  fbPtr,
+  width * height
+);
+
+const fbU8 = new Uint8ClampedArray(
+  memory.buffer,
+  fbPtr,
+  width * height * 4
+);
+
+
+const canvas = document.getElementById("screen");
+canvas.width = width;
+canvas.height = height;
+const ctx = canvas.getContext("2d");
+
+const imageData = new ImageData(fbU8, width, height);
 
 window.addEventListener("keydown", e => {
   if (e.key === "w") move(0.5);
@@ -23,6 +44,7 @@ window.addEventListener("keydown", e => {
   if (e.key === "d") rotate(10);
 });
 
+let last = performance.now();
 function loop(now) {
   frames++;
 
@@ -32,35 +54,8 @@ function loop(now) {
     frames = 0;
     last = now;
   }
-  render(canvas.width, canvas.height);
-
-  const ptr = get_columns();
-  const cols = new Int32Array(
-    memory.buffer,
-    ptr,
-    canvas.width * 3
-  );
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  for (let x = 0; x < canvas.width; x++) {
-    const ceiling = cols[x * 3];
-    const floor = cols[x * 3 + 1];
-    const shade = cols[x * 3 + 2]
-
-    // shade sky
-    ctx.fillStyle = "#000";
-    ctx.fillRect(x, 0, 1, ceiling);
-
-    // shade wall
-
-    ctx.fillStyle = `rgb(${shade},${shade}, ${shade})`;
-    ctx.fillRect(x, ceiling, 1, floor - ceiling);
-
-    // shade ground
-    ctx.fillStyle = "#400";
-    ctx.fillRect(x, floor, 1, canvas.height - floor);
-  }
+  render();
+  ctx.putImageData(imageData, 0, 0);
 
   requestAnimationFrame(loop);
 }
