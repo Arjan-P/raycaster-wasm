@@ -10,12 +10,15 @@ const {
   getWidth,
   getHeight,
   move,
-  rotate
+  rotate,
+  initChunks,
+  updateChunks
 } = wasm.instance.exports;
 
 const width = getWidth();
 const height = getHeight();
 const fbPtr = getFramebuffer();
+initChunks();
 
 const fbU32 = new Uint32Array(
   memory.buffer,
@@ -54,6 +57,7 @@ function loop(now) {
     frames = 0;
     last = now;
   }
+  updateChunks();
   render();
   ctx.putImageData(imageData, 0, 0);
 
