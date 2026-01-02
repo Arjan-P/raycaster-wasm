@@ -11,21 +11,21 @@ This project is intentionally minimal and educational: no STL heavy abstractions
 
 ## Features
 
-* **Chunked world system** (32x32 tiles per chunk)
-* **Infinite scrolling** via chunk panning (no reallocations)
-* **Fast DDA raycasting** with fixed‑point math
-* **Division‑free hot path** (bitwise chunk/local tracking)
-* **Deterministic procedural generation** (SplitMix64)
-* **Cellular Automata cave generation** across chunk borders
-* **Software renderer** (framebuffer based)
+- **Chunked world system** (32x32 tiles per chunk)
+- **Infinite scrolling** via chunk panning (no reallocations)
+- **Fast DDA raycasting** with fixed‑point math
+- **Division‑free hot path** (bitwise chunk/local tracking)
+- **Deterministic procedural generation** (SplitMix64)
+- **Cellular Automata cave generation** across chunk borders
+- **Software renderer** (framebuffer based)
 
 ---
 
 ## World Layout
 
-* Each **chunk** is `32x32` tiles
-* Active world is a `GRID×GRID` window centered on the player
-* Chunks are addressed in two coordinate spaces:
+- Each **chunk** is `32x32` tiles
+- Active world is a `GRID×GRID` window centered on the player
+- Chunks are addressed in two coordinate spaces:
 
 ### World Chunk Coordinates
 
@@ -45,9 +45,9 @@ Used for fast lookup during rendering:
 
 Chunks are **panned** when the player crosses chunk boundaries:
 
-* No reallocation
-* No modulo during ray traversal
-* Only edge chunks are regenerated
+- No reallocation
+- No modulo during ray traversal
+- Only edge chunks are regenerated
 
 ---
 
@@ -55,17 +55,17 @@ Chunks are **panned** when the player crosses chunk boundaries:
 
 ### Raycasting
 
-* Classic **DDA (Digital Differential Analyzer)**
-* Fixed‑point math (`16.16`)
-* Wall shading based on hit side
+- Classic **DDA (Digital Differential Analyzer)**
+- Fixed‑point math (`16.16`)
+- Wall shading based on hit side
 
 ### Fast Chunk Traversal
 
 During DDA stepping:
 
-* Track **local tile coords** (`0..31`)
-* Track **grid chunk indices** (`gx, gy`)
-* Adjust only when crossing chunk edges
+- Track **local tile coords** (`0..31`)
+- Track **grid chunk indices** (`gx, gy`)
+- Adjust only when crossing chunk edges
 
 No `div32()` or `%32` in the hot loop
 
@@ -83,9 +83,9 @@ seed = GLOBAL_SEED ^ f(cx, cy)
 
 This guarantees:
 
-* Same world every run
-* Infinite space
-* No stored world state
+- Same world every run
+- Infinite space
+- No stored world state
 
 ### Cellular Automata (CA)
 
@@ -93,17 +93,17 @@ Used to turn noise into caves/walls.
 
 Rule (example):
 
-* Count 8 neighbors
-* `>= 5 walls → wall`
-* `< 5 → empty`
+- Count 8 neighbors
+- `>= 5 walls → wall`
+- `< 5 → empty`
 
 ---
 
 ## Intent
 
-* Implement Raystepping with DDA
-* Learn and try out fixed point representation for the fixed point look
-* learn how to generating Deterministic worlds
+- Implement Raystepping with DDA
+- Learn and try out fixed point representation for the fixed point look
+- learn how to generating Deterministic worlds
 
 ---
 
@@ -114,3 +114,5 @@ mkdir build && cd build
 emcmake cmake ..
 cmake --build .
 ```
+
+Try in-browser demo: (https://arjan-p.github.io/raycaster-wasm)
