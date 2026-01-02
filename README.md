@@ -11,7 +11,7 @@ This project is intentionally minimal and educational: no STL heavy abstractions
 
 ## Features
 
-* **Chunked world system** (32×32 tiles per chunk)
+* **Chunked world system** (32x32 tiles per chunk)
 * **Infinite scrolling** via chunk panning (no reallocations)
 * **Fast DDA raycasting** with fixed‑point math
 * **Division‑free hot path** (bitwise chunk/local tracking)
@@ -23,7 +23,7 @@ This project is intentionally minimal and educational: no STL heavy abstractions
 
 ## World Layout
 
-* Each **chunk** is `16×16` tiles
+* Each **chunk** is `32x32` tiles
 * Active world is a `GRID×GRID` window centered on the player
 * Chunks are addressed in two coordinate spaces:
 
