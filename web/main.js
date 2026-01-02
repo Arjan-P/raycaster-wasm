@@ -1,5 +1,5 @@
 const wasm = await WebAssembly.instantiateStreaming(
-  fetch("engine.wasm"),
+  fetch("./engine.wasm"),
   {}
 );
 
