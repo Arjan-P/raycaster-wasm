@@ -23,7 +23,7 @@ target_link_options(engine PRIVATE
     -O3
     --no-entry
     -sSTANDALONE_WASM=0
-    -sEXPORTED_FUNCTIONS=["_render","_getFramebuffer","_getHeight","_getWidth","_move","_rotate"]
+    -sEXPORTED_FUNCTIONS=["_render","_initChunks","_updateChunks","_getFramebuffer","_getHeight","_getWidth","_move","_rotate"]
     -sEXPORT_ALL=0
 )
 
