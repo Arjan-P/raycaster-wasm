@@ -4,13 +4,13 @@ const uint64_t GLOBAL_SEED = 0xCAFEBABEDEADBEEFULL;
 
 constexpr int viewRadius = 1;
 constexpr int GRID = viewRadius * 2 + 1;
-int32_t mapWidth = 16;
-int32_t mapHeight = 16;
-int32_t mapDepth = 16;
+int32_t mapWidth = 32;
+int32_t mapHeight = 32;
+int32_t mapDepth = 32;
 
 struct Chunk
 {
-	int tiles[16 * 16];
+	int tiles[32 * 32];
 	int cx;
 	int cy;
 };
