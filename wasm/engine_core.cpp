@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include "engine_core.h"
 #include "fixedpoint_helpers.h"
 
@@ -66,7 +67,6 @@ void Engine::setMap(int _mapWidth, int _mapHeight, uint8_t* _map)
 	}
 }
 
-
 void Engine::clear()
 {
 	for(int i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH; i++)
@@ -78,10 +78,9 @@ void Engine::clear()
 void Engine::render()
 {
 	clear();
-	for(int i = 0; i < map_screen_width * map_screen_height; i++)
-		td_framebuffer[i] = btd_framebuffer[i];
-	int leftRay[2]  = { player.x, player.y };
-	int rightRay[2] = { player.x, player.y };
+	memcpy(td_framebuffer, btd_framebuffer, map_screen_width * map_screen_height * sizeof(uint32_t));
+
+	static int rays[SCREEN_WIDTH][2];
 	int32_t dirX = sinLUT[player.a];
 	int32_t dirY = cosLUT[player.a];
 
@@ -93,7 +92,9 @@ void Engine::render()
 	for(int x = 0; x < SCREEN_WIDTH; x++)
 	{
 		int32_t cameraX = ((int32_t)x * 2 * FP_ONE) / SCREEN_WIDTH - FP_ONE;
-
+		const int32_t EPS = FP_ONE / 1024;
+		if (cameraX <= -FP_ONE) cameraX = -FP_ONE + EPS;
+		if (cameraX >=  FP_ONE) cameraX =  FP_ONE - EPS;
 		// x component of ray vector
 		int32_t rayX = dirX + FixedMult(planeX, cameraX);
 		// y component of ray vector
@@ -139,7 +140,9 @@ void Engine::render()
 
 		bool wallHit = false;
 		int wallSide = 0;
-		while(!wallHit)
+
+		int steps = 0;
+		while(!wallHit && steps++ < 1024)
 		{
 			if(sideDistX < sideDistY)
 			{
@@ -155,6 +158,7 @@ void Engine::render()
 			}
 			if(mapX < 0 || mapX >= mapWidth || mapY < 0 || mapY >= mapHeight)
 			{
+				wallHit = false;
 				break;
 			}
 			if(map[mapY * mapWidth + mapX])
@@ -181,28 +185,29 @@ void Engine::render()
 			wallX = (mapX + (stepX < 0)) << FP_SHIFT;
 			wallY = player.y + FixedMult(perpDistance, rayY);
 		}
-		if(x == 0)
-		{
-			leftRay[0] = wallX;
-			leftRay[1] = wallY;
-		}
-		if(x == SCREEN_WIDTH - 1)
-		{
-			rightRay[0] = wallX;
-			rightRay[1] = wallY;
-		}
+
+
 		uint32_t wallShade;
 		if(!wallHit)
 		{
+			perpDistance = mapHeight * 92000;
 			wallShade = rgba(0, 0, 0);
 		}
 		else
 		{
 			if(wallSide)
-				wallShade = rgba(0, 50, 150, 255);
+				wallShade = rgba(0, 255, 25, 255);
 			else
-				wallShade = rgba(0, 25, 125, 255);
+				wallShade = rgba(0, 25, 255, 255);
 		}
+		
+		int32_t fracX = wallX & (FP_ONE - 1);
+		int32_t fracY = wallY & (FP_ONE - 1);
+		if(((fracX < FP_ONE / 20)  || fracX > FP_ONE - FP_ONE / 20) && ((fracY < FP_ONE / 20)  || fracY > FP_ONE - FP_ONE / 20))
+			wallShade = rgba(255, 0, 0, 255);
+
+		rays[x][0] = wallX;
+		rays[x][1] = wallY;
 
 		if (perpDistance < FP_ONE / 64)
     	perpDistance = FP_ONE / 64;
@@ -217,11 +222,11 @@ void Engine::render()
 
 		for(int y = 0; y < SCREEN_HEIGHT; y++)
 		{
-			if(y <= ceiling)	// shade sky
+			if(y < ceiling)	// shade sky
 			{
 				framebuffer[y * SCREEN_WIDTH + x] = rgba(0, 0, 0, 255);
 			}
-			else if(y <= floor)	// shade wall
+			else if(y < floor)	// shade wall
 			{
 				// framebuffer[y * SCREEN_WIDTH + x] = rgba(50, 100, 150, 255);
 				framebuffer[y * SCREEN_WIDTH + x] = wallShade;
@@ -261,10 +266,25 @@ void Engine::render()
 
 	int px = (player.x * MAP_SCREEN_TILE) >> FP_SHIFT;
 	int py = (player.y * MAP_SCREEN_TILE) >> FP_SHIFT;
-	int rlx = (leftRay[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
-	int rly = (leftRay[1] * MAP_SCREEN_TILE) >> FP_SHIFT;
-	int rrx = (rightRay[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
-	int rry = (rightRay[1] * MAP_SCREEN_TILE) >> FP_SHIFT;
+	// edge rays point of collision no map
+	for(int i = 0; i < SCREEN_WIDTH; i++)
+	{
+		int* ray = rays[i];
+		int rx = (ray[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
+		int ry = (ray[1] * MAP_SCREEN_TILE) >> FP_SHIFT;
+		if(i % 10 == 0)
+			drawLine(px, py, rx, ry, rgba(255, 255, 0, 255));
+	}
+	// int rlx = (leftRay[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
+	// int rly = (leftRay[1] * MAP_SCREEN_TILE) >> FP_SHIFT;
+	// int rrx = (rightRay[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
+	// int rry = (rightRay[1] * MAP_SCREEN_TILE) >> FP_SHIFT;
+	// camera endpoints calculation
+	int plx = ((player.x + planeX) * MAP_SCREEN_TILE) >> FP_SHIFT;
+	int ply = ((player.y + planeY) * MAP_SCREEN_TILE) >> FP_SHIFT;
+	int prx = ((player.x - planeX) * MAP_SCREEN_TILE) >> FP_SHIFT;
+	int pry = ((player.y - planeY) * MAP_SCREEN_TILE) >> FP_SHIFT;
+
 
 	//draw player
 	for(int i = py - 2; i < py + 2; i++)
@@ -276,6 +296,9 @@ void Engine::render()
 		}
 	}
 
-	drawLine(px, py, rlx, rly, rgba(255, 255, 0, 255));
-	drawLine(px, py, rrx, rry, rgba(255, 255, 0, 255));
+	// // draw ray edges on minimap
+	// drawLine(px, py, rlx, rly, rgba(255, 255, 0, 255));
+	// drawLine(px, py, rrx, rry, rgba(255, 255, 0, 255));
+	// draw camera plane on minimap
+	drawLine(plx, ply, prx, pry, rgba(0, 255, 0, 255));
 }

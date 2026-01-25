@@ -3,8 +3,8 @@
 #include "trig_lut.h"
 #include <cstdint>
 
-const	int SCREEN_WIDTH = 600;
-const	int SCREEN_HEIGHT = 450;
+const	int SCREEN_WIDTH = 1.2*600;
+const	int SCREEN_HEIGHT = 1.2*450;
 const int MAP_SCREEN_TILE = 20;
 
 struct Player
