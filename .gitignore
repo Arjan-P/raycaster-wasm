@@ -1,0 +1,48 @@
+# ===== Build directories =====
+build/
+build_wasm/
+build-*/
+cmake-build-*/
+out/
+
+# ===== CMake generated files =====
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+
+# ===== Ninja / Make =====
+.ninja_deps
+.ninja_log
+Makefile
+
+# ===== Compilation database =====
+compile_commands.json
+
+# ===== Editor / tooling =====
+.clangd/
+.cache/
+.vscode/
+.idea/
+
+# ===== Binaries =====
+*.o
+*.obj
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+
+# ===== Debug / profiling =====
+*.log
+*.out
+*.prof
+*.gprof
+core
+vgcore.*
+
+# ===== OS noise =====
+.DS_Store
