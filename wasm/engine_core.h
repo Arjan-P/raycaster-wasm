@@ -5,7 +5,7 @@
 
 const	int SCREEN_WIDTH = 600;
 const	int SCREEN_HEIGHT = 450;
-const int MAP_SCREEN_TILE = 10;
+const int MAP_SCREEN_TILE = 20;
 
 struct Player
 {
@@ -68,6 +68,7 @@ private:
 	int map_screen_width;
 	uint32_t framebuffer[SCREEN_HEIGHT * SCREEN_WIDTH];
 	uint32_t* td_framebuffer;
+	uint32_t* btd_framebuffer;
 	void clear();
 	uint32_t rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) {
     return (a << 24) | (b << 16) | (g << 8) | r;

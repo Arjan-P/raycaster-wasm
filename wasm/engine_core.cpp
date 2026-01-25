@@ -13,6 +13,7 @@ Engine::Engine()
 
 Engine::~Engine()
 {
+	delete[] btd_framebuffer;
 	delete[] td_framebuffer;
 }
 
@@ -35,7 +36,34 @@ void Engine::setMap(int _mapWidth, int _mapHeight, uint8_t* _map)
 	map_screen_height = mapHeight * MAP_SCREEN_TILE;
 	map_screen_width = mapWidth * MAP_SCREEN_TILE;
 	map = _map;
+	delete [] td_framebuffer;
+	delete [] btd_framebuffer;
+	td_framebuffer = nullptr;
+	btd_framebuffer = nullptr;
 	td_framebuffer = new uint32_t[map_screen_width * map_screen_height];
+	btd_framebuffer = new uint32_t[map_screen_width * map_screen_height];
+
+	for(int y = 0; y < map_screen_height; y++)
+	{
+		for(int x = 0; x < map_screen_width; x++)
+		{
+			int coarseX = x / MAP_SCREEN_TILE;
+			int coarseY = y / MAP_SCREEN_TILE;
+			int fineX = x % MAP_SCREEN_TILE;
+			int fineY = y % MAP_SCREEN_TILE;
+
+ 			btd_framebuffer[y * map_screen_width + x] = rgba(100, 100, 100, 255);
+
+			// draw walls
+			if(map[coarseY * mapWidth + coarseX])
+				btd_framebuffer[y * map_screen_width + x] = rgba(50, 100, 150, 255);
+			 
+			// draw boundries
+			if(y % MAP_SCREEN_TILE == 0 || x % MAP_SCREEN_TILE == 0)
+				btd_framebuffer[y * map_screen_width + x] = rgba(0, 0, 0, 255);
+			
+		}
+	}
 }
 
 
@@ -43,8 +71,6 @@ void Engine::clear()
 {
 	for(int i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH; i++)
 	{
-		if(i < map_screen_height * map_screen_width)
-			td_framebuffer[i] = rgba(0,0,0,255);
 		framebuffer[i] = rgba(0,0,0,255);
 	}
 }
@@ -52,8 +78,10 @@ void Engine::clear()
 void Engine::render()
 {
 	clear();
-	static int leftRay[2];
-	static int rightRay[2];
+	for(int i = 0; i < map_screen_width * map_screen_height; i++)
+		td_framebuffer[i] = btd_framebuffer[i];
+	int leftRay[2]  = { player.x, player.y };
+	int rightRay[2] = { player.x, player.y };
 	int32_t dirX = sinLUT[player.a];
 	int32_t dirY = cosLUT[player.a];
 
@@ -111,7 +139,7 @@ void Engine::render()
 
 		bool wallHit = false;
 		int wallSide = 0;
-		for(int i = 0; i < 1024; i++)
+		while(!wallHit)
 		{
 			if(sideDistX < sideDistY)
 			{
@@ -231,43 +259,23 @@ void Engine::render()
 	    }
 	};
 
-	for(int y = 0; y < map_screen_height; y++)
+	int px = (player.x * MAP_SCREEN_TILE) >> FP_SHIFT;
+	int py = (player.y * MAP_SCREEN_TILE) >> FP_SHIFT;
+	int rlx = (leftRay[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
+	int rly = (leftRay[1] * MAP_SCREEN_TILE) >> FP_SHIFT;
+	int rrx = (rightRay[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
+	int rry = (rightRay[1] * MAP_SCREEN_TILE) >> FP_SHIFT;
+
+	//draw player
+	for(int i = py - 2; i < py + 2; i++)
 	{
-		for(int x = 0; x < map_screen_width; x++)
+		for(int j = px - 2; j < px + 2; j++)
 		{
-			int coarseX = x / MAP_SCREEN_TILE;
-			int coarseY = y / MAP_SCREEN_TILE;
-			int fineX = x % MAP_SCREEN_TILE;
-			int fineY = y % MAP_SCREEN_TILE;
-			int px = (player.x * MAP_SCREEN_TILE) >> FP_SHIFT;
-			int py = (player.y * MAP_SCREEN_TILE) >> FP_SHIFT;
-
-			int rlx = (leftRay[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
-			int rly = (leftRay[1] * MAP_SCREEN_TILE) >> FP_SHIFT;
-			int rrx = (rightRay[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
-			int rry = (rightRay[1] * MAP_SCREEN_TILE) >> FP_SHIFT;
-
- 			td_framebuffer[y * map_screen_width + x] = rgba(100, 100, 100, 255);
-
-			// draw walls
-			if(map[coarseY * mapWidth + coarseX])
-				td_framebuffer[y * map_screen_width + x] = rgba(50, 100, 150, 255);
-
-			// draw player
-			for(int i = py - 1; i < py + 1; i++)
-			{
-				for(int j = px - 1; j < px + 1; j++)
-				{
-					td_framebuffer[i * map_screen_width + j] = rgba(255, 0, 0, 255);
-				}
-			}
-
-			drawLine(px, py, rlx, rly, rgba(255, 255, 0, 255));
-			drawLine(px, py, rrx, rry, rgba(255, 255, 0, 255));
-			
-			// draw boundries
-			if(y % MAP_SCREEN_TILE == 0 || x % MAP_SCREEN_TILE == 0)
-				td_framebuffer[y * map_screen_width + x] = rgba(0, 0, 0, 255);
+			if (i >= 0 && i < map_screen_height && j >= 0 && j < map_screen_width)
+				td_framebuffer[i * map_screen_width + j] = rgba(255, 0, 0, 255);
 		}
 	}
+
+	drawLine(px, py, rlx, rly, rgba(255, 255, 0, 255));
+	drawLine(px, py, rrx, rry, rgba(255, 255, 0, 255));
 }
