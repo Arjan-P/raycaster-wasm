@@ -65,8 +65,8 @@ const imageDataScreen = new ImageData(fbU8, width, height);
 const imageDataMap = new ImageData(tdfbU8, mapWidth, mapHeight);
 
 window.addEventListener("keydown", e => {
-  if (e.key === "w") engine_move((1 << 16) * 0.5);
-  if (e.key === "s") engine_move(-(1 << 16) * 0.5);
+  if (e.key === "w") engine_move((1 << 14) * 0.5);
+  if (e.key === "s") engine_move(-(1 << 14) * 0.5);
   if (e.key === "a") engine_rotate(-10);
   if (e.key === "d") engine_rotate(10);
 });

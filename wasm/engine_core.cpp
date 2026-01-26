@@ -1,15 +1,16 @@
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
 #include "engine_core.h"
 #include "fixedpoint_helpers.h"
+#include "trig_lut.h"
 
 Engine::Engine()
 {
-	player.x = 8 * FP_ONE;
-	player.y = 8 * FP_ONE;
+	player.x = 8 << FP_SHIFT;
+	player.y = 8 << FP_SHIFT;
 	player.a = 0;
-	FOV = 1024 / 4;
 }
 
 Engine::~Engine()
@@ -20,13 +21,13 @@ Engine::~Engine()
 
 void Engine::move(int32_t f)
 {
-	player.x += FixedMult(f, sinLUT[player.a]);
-	player.y += FixedMult(f, cosLUT[player.a]);
+	player.x += FixedMult(f, cosLUT[player.a]);
+	player.y += FixedMult(f, sinLUT[player.a]);
 }
 
 void Engine::rotate(int a)
 {
-	player.a = (player.a - a);
+	player.a = (player.a + a);
 	player.a &= ANGLE_MASK;
 }
 
@@ -77,32 +78,32 @@ void Engine::clear()
 
 void Engine::render()
 {
+	
 	clear();
 	memcpy(td_framebuffer, btd_framebuffer, map_screen_width * map_screen_height * sizeof(uint32_t));
 
 	static int rays[SCREEN_WIDTH][2];
-	int32_t dirX = sinLUT[player.a];
-	int32_t dirY = cosLUT[player.a];
+	int32_t dirX = cosLUT[player.a];
+	int32_t dirY = sinLUT[player.a];
 
-	constexpr int32_t PLANE_SCALE = (int32_t)(0.66 * FP_ONE);
+	int32_t PLANE_SCALE = FloatToFixed(0.66);
 
 	int32_t planeX = FixedMult( -dirY, PLANE_SCALE);
 	int32_t planeY = FixedMult( dirX, PLANE_SCALE);
 
 	for(int x = 0; x < SCREEN_WIDTH; x++)
 	{
-		int32_t cameraX = ((int32_t)x * 2 * FP_ONE) / SCREEN_WIDTH - FP_ONE;
-		const int32_t EPS = FP_ONE / 1024;
-		if (cameraX <= -FP_ONE) cameraX = -FP_ONE + EPS;
-		if (cameraX >=  FP_ONE) cameraX =  FP_ONE - EPS;
+		double cx = (2.0 * x) / (SCREEN_WIDTH - 1) - 1.0;
+		int32_t cameraX = FloatToFixed(cx);
+
 		// x component of ray vector
 		int32_t rayX = dirX + FixedMult(planeX, cameraX);
 		// y component of ray vector
 		int32_t rayY = dirY + FixedMult(planeY, cameraX);
 		// change in ray distance by one step along x axis
-		int32_t deltaDistY = (rayY == 0) ? INT32_MAX : FixedDiv(FP_ONE, abs(rayY));
+		int32_t deltaDistY = (rayY == 0) ? INT32_MAX : (FixedDiv(FP_ONE, abs(rayY)));
 		// change in ray distance by one step along y axis
-		int32_t deltaDistX = (rayX == 0) ? INT32_MAX : FixedDiv(FP_ONE, abs(rayX));
+		int32_t deltaDistX = (rayX == 0) ? INT32_MAX : (FixedDiv(FP_ONE, abs(rayX)));
 		// step in +x or -x
 		int stepX;
 		// step in +y or -y
@@ -111,6 +112,7 @@ void Engine::render()
 		int32_t sideDistX;
 		// ray dist to immediate next y grid line
 		int32_t sideDistY;
+
 		int mapX = player.x >> FP_SHIFT;
 		int mapY = player.y >> FP_SHIFT;
 		if(rayX >= 0)
@@ -174,14 +176,14 @@ void Engine::render()
 		if(wallSide)
 		{
 			// hit y boundry
-			perpDistance = sideDistY - deltaDistY;
+			perpDistance = abs(sideDistY - deltaDistY);
 			wallY = (mapY + (stepY < 0)) << FP_SHIFT;
 			wallX = player.x + FixedMult(perpDistance, rayX);
 		}
 		else
 		{
 			// hit x boundry
-			perpDistance = sideDistX - deltaDistX;
+			perpDistance = abs(sideDistX - deltaDistX);
 			wallX = (mapX + (stepX < 0)) << FP_SHIFT;
 			wallY = player.y + FixedMult(perpDistance, rayY);
 		}
@@ -200,7 +202,6 @@ void Engine::render()
 			else
 				wallShade = rgba(0, 25, 255, 255);
 		}
-		
 		int32_t fracX = wallX & (FP_ONE - 1);
 		int32_t fracY = wallY & (FP_ONE - 1);
 		if(((fracX < FP_ONE / 20)  || fracX > FP_ONE - FP_ONE / 20) && ((fracY < FP_ONE / 20)  || fracY > FP_ONE - FP_ONE / 20))
@@ -272,7 +273,8 @@ void Engine::render()
 		int* ray = rays[i];
 		int rx = (ray[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
 		int ry = (ray[1] * MAP_SCREEN_TILE) >> FP_SHIFT;
-		if(i % 10 == 0)
+		// int c = (SCREEN_WIDTH / 7);
+		// if(i % c == 0)
 			drawLine(px, py, rx, ry, rgba(255, 255, 0, 255));
 	}
 	// int rlx = (leftRay[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
