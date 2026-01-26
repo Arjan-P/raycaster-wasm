@@ -8,10 +8,6 @@ interface MapEditorProps {
   mapWidth: number;
   mapHeight: number;
 }
-let isPainting = false;
-let lastIdx = -1;
-
-
 
 export const MapEditor = forwardRef<MapEditorHandle, MapEditorProps>(
   ({ mapWidth, mapHeight }, ref) => {
@@ -76,6 +72,7 @@ export const MapEditor = forwardRef<MapEditorHandle, MapEditorProps>(
       }
 
       function getCell(e: MouseEvent) {
+        if(!canvas) return;
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -89,13 +86,14 @@ export const MapEditor = forwardRef<MapEditorHandle, MapEditorProps>(
       function onMouseDown(e: MouseEvent) {
         isPainting = true;
         lastIdx = -1;
-        const { cx, cy } = getCell(e);
+        const { cx, cy } = getCell(e) as {cx:number; cy:number};
         paintCell(cx, cy);
       }
 
       function onMouseMove(e: MouseEvent) {
         if (!isPainting) return;
-        const { cx, cy } = getCell(e);
+
+        const { cx, cy } = getCell(e) as {cx:number; cy:number};
         paintCell(cx, cy);
       }
 
