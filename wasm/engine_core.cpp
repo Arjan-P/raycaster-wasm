@@ -1,10 +1,6 @@
-#include <cassert>
 #include <cmath>
-#include <cstdint>
 #include <cstring>
 #include "engine_core.h"
-#include "fixedpoint_helpers.h"
-#include "trig_lut.h"
 
 Engine::Engine()
 {
@@ -13,14 +9,24 @@ Engine::Engine()
 	player.a = 0;
 }
 
-Engine::~Engine()
+
+Engine::Engine(int px, int py, int pa)
 {
-	delete[] btd_framebuffer;
-	delete[] td_framebuffer;
+	player.x = px << FP_SHIFT;
+	player.y = py << FP_SHIFT;
+	player.a = pa;
 }
 
-void Engine::move(int32_t f)
+Engine::~Engine()
 {
+	delete [] map;
+	delete [] btd_framebuffer;
+	delete [] td_framebuffer;
+}
+
+void Engine::move(float amnt)
+{
+	int32_t f = amnt * FP_ONE;
 	player.x += FixedMult(f, cosLUT[player.a]);
 	player.y += FixedMult(f, sinLUT[player.a]);
 }
@@ -31,13 +37,22 @@ void Engine::rotate(int a)
 	player.a &= ANGLE_MASK;
 }
 
-void Engine::setMap(int _mapWidth, int _mapHeight, uint8_t* _map)
+uint8_t* Engine::getMapBuffer(int _mapWidth, int _mapHeight)
 {
 	mapHeight = _mapHeight;
 	mapWidth = _mapWidth;
+	player.x = mapWidth / 2 * FP_ONE;
+	player.y = mapHeight / 2 * FP_ONE;
+	delete [] map;
+	map = nullptr;
+	map = new uint8_t[mapHeight * mapWidth];
+	return map;
+}
+
+void Engine::drawMapBg()
+{
 	map_screen_height = mapHeight * MAP_SCREEN_TILE;
 	map_screen_width = mapWidth * MAP_SCREEN_TILE;
-	map = _map;
 	delete [] td_framebuffer;
 	delete [] btd_framebuffer;
 	td_framebuffer = nullptr;
@@ -63,7 +78,6 @@ void Engine::setMap(int _mapWidth, int _mapHeight, uint8_t* _map)
 			// draw boundries
 			if(y % MAP_SCREEN_TILE == 0 || x % MAP_SCREEN_TILE == 0)
 				btd_framebuffer[y * map_screen_width + x] = rgba(0, 0, 0, 255);
-			
 		}
 	}
 }
@@ -93,7 +107,7 @@ void Engine::render()
 
 	for(int x = 0; x < SCREEN_WIDTH; x++)
 	{
-		double cx = (2.0 * x) / (SCREEN_WIDTH - 1) - 1.0;
+		double cx = (2.0 * x) / (SCREEN_WIDTH) - 1.0;
 		int32_t cameraX = FloatToFixed(cx);
 
 		// x component of ray vector
@@ -202,8 +216,10 @@ void Engine::render()
 			else
 				wallShade = rgba(0, 25, 255, 255);
 		}
+
 		int32_t fracX = wallX & (FP_ONE - 1);
 		int32_t fracY = wallY & (FP_ONE - 1);
+		// shade wall boundries
 		if(((fracX < FP_ONE / 20)  || fracX > FP_ONE - FP_ONE / 20) && ((fracY < FP_ONE / 20)  || fracY > FP_ONE - FP_ONE / 20))
 			wallShade = rgba(255, 0, 0, 255);
 
@@ -274,7 +290,7 @@ void Engine::render()
 		int rx = (ray[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
 		int ry = (ray[1] * MAP_SCREEN_TILE) >> FP_SHIFT;
 		int c = (SCREEN_WIDTH / 3);
-		if(i == 0 || i == SCREEN_WIDTH - 1)
+		if(i == 0 || i == SCREEN_WIDTH / 2 || i == SCREEN_WIDTH - 1)
 			drawLine(px, py, rx, ry, rgba(255, 255, 0, 255));
 	}
 	// int rlx = (leftRay[0] * MAP_SCREEN_TILE) >> FP_SHIFT;

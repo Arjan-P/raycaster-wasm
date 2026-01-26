@@ -7,14 +7,14 @@ static Engine engine;
 
 extern "C" {
 
+void init(int px, int py, int pa)
+{
+	engine = Engine(px, py, pa);
+}
+
 uint32_t* engine_screenbuffer()
 {
 	return engine.getFramebuffer();
-}
-
-uint32_t* engine_top_down_screenbuffer()
-{
-	return engine.getTopDownFramebuffer();
 }
 
 int engine_screen_width()
@@ -22,9 +22,15 @@ int engine_screen_width()
 	return engine.getScreenWidth();	
 }
 
+
 int engine_screen_height()
 {
 	return engine.getScreenHeight();
+}
+
+uint32_t* engine_top_down_screenbuffer()
+{
+	return engine.getTopDownFramebuffer();
 }
 
 int engine_map_screen_width()
@@ -37,35 +43,17 @@ int engine_map_screen_height()
 	return engine.getMapScreenHeight();
 }
 
-void init()
+void engine_draw_map_bg()
 {
-	engine = Engine();
+	engine.drawMapBg();
 }
 
-void engine_map_init()
+uint8_t* engine_map_buffer(int mapWidth, int mapHeight)
 {
-	static uint8_t map[] = {
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	};
-	engine.setMap(16, 16, map);
+	return engine.getMapBuffer(mapWidth, mapHeight);
 }
 
-void engine_move(int32_t amount)
+void engine_move(float amount)
 {
 	engine.move(amount);
 }

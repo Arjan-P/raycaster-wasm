@@ -3,8 +3,8 @@
 #include "trig_lut.h"
 #include <cstdint>
 
-const	int SCREEN_WIDTH = 2*600;
-const	int SCREEN_HEIGHT = 2*450;
+const	int SCREEN_WIDTH = 600;
+const	int SCREEN_HEIGHT = 450;
 const int MAP_SCREEN_TILE = 20;
 
 struct Player
@@ -18,11 +18,13 @@ class Engine
 {
 public:
 	Engine();
+	Engine(int px, int py, int pa);
 	~Engine();
-	void move(int32_t f);
+	void move(float amnt);
 	void rotate(int a);
 	void render();
-	void setMap(int _mapWidth, int _mapHeight, uint8_t* _map);
+	uint8_t* getMapBuffer(int _mapWidth, int _mapHeight);
+	void drawMapBg();
 	uint32_t* getFramebuffer()
 	{
 		return framebuffer;
