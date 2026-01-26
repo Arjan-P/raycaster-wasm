@@ -273,8 +273,8 @@ void Engine::render()
 		int* ray = rays[i];
 		int rx = (ray[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
 		int ry = (ray[1] * MAP_SCREEN_TILE) >> FP_SHIFT;
-		// int c = (SCREEN_WIDTH / 7);
-		// if(i % c == 0)
+		int c = (SCREEN_WIDTH / 3);
+		if(i == 0 || i == SCREEN_WIDTH - 1)
 			drawLine(px, py, rx, ry, rgba(255, 255, 0, 255));
 	}
 	// int rlx = (leftRay[0] * MAP_SCREEN_TILE) >> FP_SHIFT;
