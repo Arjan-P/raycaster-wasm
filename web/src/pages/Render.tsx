@@ -39,8 +39,8 @@ export function Render() {
     horizAccum.current += dx;
     vertAccum.current += dy;
 
-    const moveSpeed = 0.02;
-    const rotateSpeed = 0.1;
+    const moveSpeed = 0.1;
+    const rotateSpeed = 0.5;
 
     /* ---- VERTICAL (move) ---- */
     if (Math.abs(vertAccum.current) >= VERT_DEADZONE) {

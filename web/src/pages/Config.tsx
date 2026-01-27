@@ -23,7 +23,7 @@ export function Config() {
   return (
     <section className="h-full">
       <div className="h-full w-full flex justify-around  items-center">
-        <div className="p-6 rounded-lg border border-white/10 pb-12 flex gap-5">
+        <div className="p-6 rounded-lg border border-white/10 pb-12 flex flex-col gap-5">
           <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
             <input type="text" placeholder="Enter Width" className="border" onChange={(e) => { setMapWidth(e.target.value) }} />
             <input type="text" placeholder="Enter Height" className="border" onChange={(e) => { setMapHeight(e.target.value) }} />
