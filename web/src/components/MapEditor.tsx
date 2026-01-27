@@ -62,7 +62,7 @@ export const MapEditor = forwardRef<MapEditorHandle, MapEditorProps>(
         lastIdx = idx;
         mapRef.current[idx] ^= 1;
 
-        ctx.fillStyle = mapRef.current[idx] ? "#326496" : "#ffffff";
+        ctx.fillStyle = mapRef.current[idx] ? "#326496" : "#4a5565";
         ctx.fillRect(
           cx * cellSize + 1,
           cy * cellSize + 1,
@@ -71,50 +71,62 @@ export const MapEditor = forwardRef<MapEditorHandle, MapEditorProps>(
         );
       }
 
-      function getCell(e: MouseEvent) {
-        if(!canvas) return;
+      function getCellFromPoint(x: number, y: number) {
+        if (!canvas) return;
+
         const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const px = x - rect.left;
+        const py = y - rect.top;
 
         return {
-          cx: Math.floor(x / cellSize),
-          cy: Math.floor(y / cellSize),
+          cx: Math.floor(px / cellSize),
+          cy: Math.floor(py / cellSize),
         };
       }
 
-      function onMouseDown(e: MouseEvent) {
+      function onPointerDown(e: PointerEvent) {
+        e.preventDefault();
+        if(!canvas) return;
+        canvas.setPointerCapture(e.pointerId);
+
         isPainting = true;
         lastIdx = -1;
-        const { cx, cy } = getCell(e) as {cx:number; cy:number};
-        paintCell(cx, cy);
+
+        const cell = getCellFromPoint(e.clientX, e.clientY);
+        if (!cell) return;
+
+        paintCell(cell.cx, cell.cy);
       }
 
-      function onMouseMove(e: MouseEvent) {
+      function onPointerMove(e: PointerEvent) {
         if (!isPainting) return;
 
-        const { cx, cy } = getCell(e) as {cx:number; cy:number};
-        paintCell(cx, cy);
+        const cell = getCellFromPoint(e.clientX, e.clientY);
+        if (!cell) return;
+
+        paintCell(cell.cx, cell.cy);
       }
 
-      function stopPainting() {
+      function onPointerUp(_e: PointerEvent) {
         isPainting = false;
         lastIdx = -1;
       }
-
-      canvas.addEventListener("mousedown", onMouseDown);
-      canvas.addEventListener("mousemove", onMouseMove);
-      canvas.addEventListener("mouseup", stopPainting);
-      canvas.addEventListener("mouseleave", stopPainting);
+      canvas.addEventListener("pointerdown", onPointerDown);
+      canvas.addEventListener("pointermove", onPointerMove);
+      canvas.addEventListener("pointerup", onPointerUp);
+      canvas.addEventListener("pointercancel", onPointerUp);
+      canvas.addEventListener("pointerleave", onPointerUp);
       return () => {
-        canvas.removeEventListener("mousedown", onMouseDown);
-        canvas.removeEventListener("mousemove", onMouseMove);
-        canvas.removeEventListener("mouseup", stopPainting);
-        canvas.removeEventListener("mouseleave", stopPainting);
+        canvas.removeEventListener("pointerdown", onPointerDown);
+        canvas.removeEventListener("pointermove", onPointerMove);
+        canvas.removeEventListener("pointerup", onPointerUp);
+        canvas.removeEventListener("pointercancel", onPointerUp);
+        canvas.removeEventListener("pointerleave", onPointerUp);
       };
+
     }, [mapWidth, mapHeight]);
 
-    return <canvas ref={canvasRef} />;
+    return <canvas ref={canvasRef} style={{ touchAction: "none" }}/>;
   }
 );
 
