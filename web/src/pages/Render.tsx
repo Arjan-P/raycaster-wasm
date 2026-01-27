@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createEngineRuntime } from "../wasm/engine";
 import { mapBuffer, mapWidth, mapHeight } from "../wasm/mapStore";
 
@@ -14,6 +14,7 @@ export function Render() {
 
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const lastTouch = useRef<{ x: number; y: number } | null>(null);
+  const [showMap, setShowMap] = useState(false);
 
   function onTouchStart(e: TouchEvent) {
     if (e.touches.length !== 1) return;
@@ -134,19 +135,46 @@ export function Render() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
   return (
-    <section className="h-full">
-      <div className="h-full w-full flex flex-row justify-around  items-center">
-        <canvas ref={screenRef} className="w-full h-full image-rendering-pixelated touch-none" />
-        <div className="w-full h-full flex items-center justify-center">
+    <section className="h-full w-full">
+      <button
+        onClick={() => setShowMap(v => !v)}
+        className="buttonStyle mb-4"
+      >
+        {showMap ? "Hide Map" : "Show Map"}
+      </button>
+
+      <div className="h-full w-full flex flex-row items-center justify-around gap-6">
+
+        {/* ===== Screen (engine output) ===== */}
+        <div className="flex-1 h-full flex items-center justify-center bg-black">
           <canvas
             ref={screenRef}
-            className="max-w-full max-h-full aspect-[4/3] touch-none"
+            className="
+            max-w-full
+            max-h-full
+            aspect-[4/3]
+            image-rendering-pixelated
+            touch-none
+          "
           />
         </div>
 
-        <div className="w-full h-full flex items-center justify-center">
-          <canvas ref={mapRef} className="max-w-full max-h-full aspect-square touch-none" />
+        {/* ===== Map ===== */}
+        <div className={`flex-1 h-full flex items-center justify-center bg-black ${showMap ? "" : "hidden"}`}>
+          <canvas
+            ref={mapRef}
+            className="
+            max-w-full
+            max-h-full
+            aspect-square
+            image-rendering-pixelated
+            touch-none
+          "
+          />
         </div>
+
       </div>
-    </section>)
+    </section>
+  );
+
 }
