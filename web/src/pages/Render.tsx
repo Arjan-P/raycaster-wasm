@@ -125,6 +125,14 @@ export function Render() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+  useEffect(() => {
+    function onResize() {
+      // CSS handles scale — no need to touch canvas width/height
+    }
+
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   return (
     <section className="h-full">
       <div className="h-full w-full flex flex-col justify-around  items-center">
