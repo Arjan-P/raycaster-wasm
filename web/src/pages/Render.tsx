@@ -135,46 +135,66 @@ export function Render() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
   return (
-    <section className="h-full w-full">
+    <section className="h-full w-full flex flex-col">
       <button
         onClick={() => setShowMap(v => !v)}
-        className="buttonStyle mb-4"
+        className="buttonStyle mb-4 self-center"
       >
         {showMap ? "Hide Map" : "Show Map"}
       </button>
 
-      <div className="h-full w-full flex flex-row items-center justify-around gap-6">
-
-        {/* ===== Screen (engine output) ===== */}
-        <div className="flex-1 h-full flex items-center justify-center bg-black">
+      <div
+        className="
+          flex
+          flex-col
+          lg:flex-row
+          items-center
+          justify-around
+          gap-6
+          h-full
+          w-full
+        "
+      >
+        {/* ===== Screen ===== */}
+        <div className="flex-1 w-full max-h-[60vh] lg:max-h-none flex items-center justify-center bg-black">
           <canvas
             ref={screenRef}
             className="
-            max-w-full
-            max-h-full
-            aspect-[4/3]
-            image-rendering-pixelated
-            touch-none
-          "
+              max-w-full
+              max-h-full
+              aspect-[4/3]
+              image-rendering-pixelated
+              touch-none
+            "
           />
         </div>
 
         {/* ===== Map ===== */}
-        <div className={`flex-1 h-full flex items-center justify-center bg-black ${showMap ? "" : "hidden"}`}>
+        <div
+          className={`
+            flex-1
+            w-full
+            max-h-[40vh]
+            lg:max-h-none
+            flex
+            items-center
+            justify-center
+            bg-black
+            ${showMap ? "" : "hidden"}
+          `}
+        >
           <canvas
             ref={mapRef}
             className="
-            max-w-full
-            max-h-full
-            aspect-square
-            image-rendering-pixelated
-            touch-none
-          "
+              max-w-full
+              max-h-full
+              aspect-square
+              image-rendering-pixelated
+              touch-none
+            "
           />
         </div>
-
       </div>
     </section>
   );
-
 }

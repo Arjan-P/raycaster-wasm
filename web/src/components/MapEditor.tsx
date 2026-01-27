@@ -86,7 +86,7 @@ export const MapEditor = forwardRef<MapEditorHandle, MapEditorProps>(
 
       function onPointerDown(e: PointerEvent) {
         e.preventDefault();
-        if(!canvas) return;
+        if (!canvas) return;
         canvas.setPointerCapture(e.pointerId);
 
         isPainting = true;
@@ -126,7 +126,11 @@ export const MapEditor = forwardRef<MapEditorHandle, MapEditorProps>(
 
     }, [mapWidth, mapHeight]);
 
-    return <canvas ref={canvasRef} style={{ touchAction: "none" }}/>;
+    return (
+      <div className="w-full overflow-auto rounded-lg border border-white/10">
+        <canvas ref={canvasRef} style={{ touchAction: "none" }} />
+      </div>
+    );
   }
 );
 
