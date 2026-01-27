@@ -52,17 +52,18 @@ return (
       >
         {/* ===== Form ===== */}
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+          <h2>Configure Map</h2>
           <input
             type="number"
             min={1}
-            placeholder="Enter Width"
+            placeholder="Enter Map Width"
             className="border rounded px-3 py-2"
             onChange={(e) => setMapWidth(e.target.value)}
           />
           <input
             type="number"
             min={1}
-            placeholder="Enter Height"
+            placeholder="Enter Map Height"
             className="border rounded px-3 py-2"
             onChange={(e) => setMapHeight(e.target.value)}
           />
@@ -74,6 +75,7 @@ return (
         {/* ===== Editor ===== */}
         {showEditor && (
           <div className="flex flex-col gap-4">
+              <p>Shade wall cells</p>
               <MapEditor
                 ref={editorRef}
                 mapHeight={Number(mapHeight)!}
