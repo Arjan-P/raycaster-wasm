@@ -135,7 +135,7 @@ export function Render() {
   }, []);
   return (
     <section className="h-full">
-      <div className="h-full w-full flex flex-col justify-around  items-center">
+      <div className="h-full w-full flex flex-row justify-around  items-center">
         <canvas ref={screenRef} className="w-full h-full image-rendering-pixelated touch-none" />
         <div className="w-full h-full flex items-center justify-center">
           <canvas
@@ -145,7 +145,7 @@ export function Render() {
         </div>
 
         <div className="w-full h-full flex items-center justify-center">
-          <canvas ref={mapRef} />
+          <canvas ref={mapRef} className="max-w-full max-h-full aspect-square touch-none" />
         </div>
       </div>
     </section>)
