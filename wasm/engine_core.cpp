@@ -3,7 +3,7 @@
 #include "engine_core.h"
 #include "fixedpoint_helpers.h"
 
-	uint8_t wallText[16*16] = {
+	uint8_t wallText1[16*16] = {
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
@@ -21,8 +21,29 @@
 		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	};
+
+	uint8_t wallText2[16*16] = {
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	};
 Engine::Engine()
 {
+	textures.push_back(wallText1);
+	textures.push_back(wallText2);
 	player.x = 8 << FP_SHIFT;
 	player.y = 8 << FP_SHIFT;
 	player.a = 0;
@@ -31,7 +52,8 @@ Engine::Engine()
 
 Engine::Engine(int px, int py, int pa)
 {
-
+	textures.push_back(wallText1);
+	textures.push_back(wallText2);
 	player.x = px << FP_SHIFT;
 	player.y = py << FP_SHIFT;
 	player.a = pa;
@@ -277,7 +299,7 @@ void Engine::render()
 				int texY = (texPos >> FP_SHIFT) & (TEX_H - 1);
         texPos += texStep;
 
-        int shade = ~wallText[texY * TEX_W + textCol];
+        int shade = ~textures[1][texY * TEX_W + textCol];
 
         framebuffer[y * SCREEN_WIDTH + x] =
             rgba(shade * 50, shade * 100, shade * 150, 255);
