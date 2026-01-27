@@ -128,8 +128,17 @@ export function Render() {
   return (
     <section className="h-full">
       <div className="h-full w-full flex flex-col justify-around  items-center">
-        <canvas ref={screenRef} className="touch-none" />
-        <canvas ref={mapRef} />
+        <canvas ref={screenRef} className="w-full h-full image-rendering-pixelated touch-none" />
+        <div className="w-full h-full flex items-center justify-center">
+          <canvas
+            ref={screenRef}
+            className="max-w-full max-h-full aspect-[4/3] touch-none"
+          />
+        </div>
+
+        <div className="w-full h-full flex items-center justify-center">
+          <canvas ref={mapRef} />
+        </div>
       </div>
     </section>)
 }

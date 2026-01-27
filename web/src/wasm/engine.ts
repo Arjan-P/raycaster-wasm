@@ -46,6 +46,7 @@ export async function createEngineRuntime(
   screenCanvas.width = screenW;
   screenCanvas.height = screenH;
   const ctxScreen = screenCanvas.getContext("2d")!;
+  ctxScreen.imageSmoothingEnabled = false;
   const imageDataScreen = new ImageData(fbU8, screenW, screenH);
 
   // map canvas setup
