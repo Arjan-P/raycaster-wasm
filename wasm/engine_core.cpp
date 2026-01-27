@@ -1,7 +1,26 @@
 #include <cmath>
 #include <cstring>
 #include "engine_core.h"
+#include "fixedpoint_helpers.h"
 
+	uint8_t wallText[16*16] = {
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	};
 Engine::Engine()
 {
 	player.x = 8 << FP_SHIFT;
@@ -12,6 +31,7 @@ Engine::Engine()
 
 Engine::Engine(int px, int py, int pa)
 {
+
 	player.x = px << FP_SHIFT;
 	player.y = py << FP_SHIFT;
 	player.a = pa;
@@ -185,6 +205,7 @@ void Engine::render()
 		}
 
 		int32_t perpDistance;
+		int32_t textCol;
 		int32_t wallX;
 		int32_t wallY;
 		if(wallSide)
@@ -193,6 +214,8 @@ void Engine::render()
 			perpDistance = abs(sideDistY - deltaDistY);
 			wallY = (mapY + (stepY < 0)) << FP_SHIFT;
 			wallX = player.x + FixedMult(perpDistance, rayX);
+			// find fractional part of wallY * text width
+			textCol = ((wallX & (FP_ONE - 1)) * 16) >> FP_SHIFT; // Y-side
 		}
 		else
 		{
@@ -200,28 +223,19 @@ void Engine::render()
 			perpDistance = abs(sideDistX - deltaDistX);
 			wallX = (mapX + (stepX < 0)) << FP_SHIFT;
 			wallY = player.y + FixedMult(perpDistance, rayY);
+			// find fractional part of wallX * text width
+			textCol = ((wallY & (FP_ONE - 1)) * 16) >> FP_SHIFT; // X-side
+
 		}
 
 
-		uint32_t wallShade;
 		if(!wallHit)
 		{
 			perpDistance = mapHeight * 92000;
-			wallShade = rgba(0, 0, 0);
-		}
-		else
-		{
-			if(wallSide)
-				wallShade = rgba(0, 255, 25, 255);
-			else
-				wallShade = rgba(0, 25, 255, 255);
 		}
 
-		int32_t fracX = wallX & (FP_ONE - 1);
-		int32_t fracY = wallY & (FP_ONE - 1);
-		// shade wall boundries
-		if(((fracX < FP_ONE / 20)  || fracX > FP_ONE - FP_ONE / 20) && ((fracY < FP_ONE / 20)  || fracY > FP_ONE - FP_ONE / 20))
-			wallShade = rgba(255, 0, 0, 255);
+		// int32_t fracX = wallX & (FP_ONE - 1);
+		// int32_t fracY = wallY & (FP_ONE - 1);
 
 		rays[x][0] = wallX;
 		rays[x][1] = wallY;
@@ -237,6 +251,19 @@ void Engine::render()
 		if(floor > SCREEN_HEIGHT)
 			floor = SCREEN_HEIGHT - 1;
 
+		constexpr int TEX_W = 16;
+		constexpr int TEX_H = 16;
+
+		int drawStart = ceiling;
+		int drawEnd   = floor;
+
+		int32_t texStep = (TEX_H << FP_SHIFT) / wallHeight;
+
+		// vertical texture position
+		int32_t texPos =
+		    ((drawStart - SCREEN_HEIGHT / 2 + wallHeight / 2) * texStep);
+
+
 		for(int y = 0; y < SCREEN_HEIGHT; y++)
 		{
 			if(y < ceiling)	// shade sky
@@ -246,7 +273,14 @@ void Engine::render()
 			else if(y < floor)	// shade wall
 			{
 				// framebuffer[y * SCREEN_WIDTH + x] = rgba(50, 100, 150, 255);
-				framebuffer[y * SCREEN_WIDTH + x] = wallShade;
+				//framebuffer[y * SCREEN_WIDTH + x] = ;
+				int texY = (texPos >> FP_SHIFT) & (TEX_H - 1);
+        texPos += texStep;
+
+        int shade = ~wallText[texY * TEX_W + textCol];
+
+        framebuffer[y * SCREEN_WIDTH + x] =
+            rgba(shade * 50, shade * 100, shade * 150, 255);
 			}
 			else
 			{
