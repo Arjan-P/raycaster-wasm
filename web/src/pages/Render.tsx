@@ -6,40 +6,70 @@ export function Render() {
   const screenRef = useRef<HTMLCanvasElement>(null);
   const mapRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<any>(null);
+  const HORIZ_DEADZONE = 12; // px
+  const VERT_DEADZONE = 10; // px
+
+  const horizAccum = useRef(0);
+  const vertAccum = useRef(0);
+
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const lastTouch = useRef<{ x: number; y: number } | null>(null);
+
   function onTouchStart(e: TouchEvent) {
     if (e.touches.length !== 1) return;
 
     const t = e.touches[0];
     touchStart.current = { x: t.clientX, y: t.clientY };
     lastTouch.current = { x: t.clientX, y: t.clientY };
+
+    horizAccum.current = 0;
+    vertAccum.current = 0;
   }
 
   function onTouchMove(e: TouchEvent) {
     const engine = engineRef.current;
-    if (!engine || !touchStart.current || e.touches.length !== 1) return;
+    if (!engine || !lastTouch.current || e.touches.length !== 1) return;
 
     const t = e.touches[0];
-    const dx = t.clientX - lastTouch.current!.x;
-    const dy = t.clientY - lastTouch.current!.y;
+    const dx = t.clientX - lastTouch.current.x;
+    const dy = t.clientY - lastTouch.current.y;
 
     lastTouch.current = { x: t.clientX, y: t.clientY };
 
-    // tweak these to taste
+    horizAccum.current += dx;
+    vertAccum.current += dy;
+
     const moveSpeed = 0.02;
     const rotateSpeed = 0.1;
 
-    // vertical swipe → move
-    engine.move(-dy * moveSpeed);
+    /* ---- VERTICAL (move) ---- */
+    if (Math.abs(vertAccum.current) >= VERT_DEADZONE) {
+      const effectiveDy =
+        vertAccum.current > 0
+          ? vertAccum.current - VERT_DEADZONE
+          : vertAccum.current + VERT_DEADZONE;
 
-    // horizontal swipe → rotate
-    engine.rotate(dx * rotateSpeed);
+      engine.move(-effectiveDy * moveSpeed);
+      vertAccum.current = 0;
+    }
+
+    /* ---- HORIZONTAL (rotate) ---- */
+    if (Math.abs(horizAccum.current) >= HORIZ_DEADZONE) {
+      const effectiveDx =
+        horizAccum.current > 0
+          ? horizAccum.current - HORIZ_DEADZONE
+          : horizAccum.current + HORIZ_DEADZONE;
+
+      engine.rotate(effectiveDx * rotateSpeed);
+      horizAccum.current = 0;
+    }
   }
 
   function onTouchEnd() {
     touchStart.current = null;
     lastTouch.current = null;
+    horizAccum.current = 0;
+    vertAccum.current = 0;
   }
 
 
@@ -98,7 +128,7 @@ export function Render() {
   return (
     <section className="h-full">
       <div className="h-full w-full flex flex-col justify-around  items-center">
-        <canvas ref={screenRef} className="touch-none"/>
+        <canvas ref={screenRef} className="touch-none" />
         <canvas ref={mapRef} />
       </div>
     </section>)
