@@ -121,6 +121,7 @@ export function Render() {
       if (e.key === "s") engine.move(-0.5);
       if (e.key === "a") engine.rotate(-10);
       if (e.key === "d") engine.rotate(10);
+      if (e.key === "m") setShowMap(prev => !prev);
     }
 
     window.addEventListener("keydown", onKey);
