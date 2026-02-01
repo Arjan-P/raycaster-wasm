@@ -1,5 +1,7 @@
 A Wolfenstein 3D stlye software graphics engine compiled to web assembly.
 
+![engine_demo](./img/output.gif)
+
 Features:
 
 > Uses fast DDA algorithm to step rays one call boundry at a time
